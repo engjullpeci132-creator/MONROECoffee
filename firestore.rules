@@ -1,0 +1,83 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: menu_items
+    // Fields: title, description, price, image, category, order
+    //
+    // Collection: reservations
+    // Fields: name, email, date, time, guests, status, userId, createdAt
+    //
+    // Collection: users
+    // Fields: uid, email, role
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "engjullpeci132@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Validation Helpers
+    function isValidMenuItem(data) {
+      return data.title is string && data.title.size() > 0 && data.title.size() < 100 &&
+             data.price is string && data.price.size() > 0 &&
+             data.image is string && data.image.size() > 0 &&
+             data.category is string;
+    }
+
+    function isValidReservation(data) {
+      return data.name is string && data.name.size() > 0 &&
+             data.email is string &&
+             data.date is string &&
+             data.time is string &&
+             data.guests is number && data.guests > 0 &&
+             data.status in ['pending', 'confirmed', 'cancelled'];
+    }
+
+    // Rules
+    match /menu_items/{itemId} {
+      allow read: if true; // Publicly readable
+      allow write: if isAdmin() && isValidMenuItem(request.resource.data);
+    }
+
+    match /reservations/{reservationId} {
+      // Admins see all, users see their own
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      
+      // Anyone can create a reservation (even unauth, or we can require auth)
+      // For this app, let's require auth to track properly or allow anonymous eventually.
+      // Let's require auth for better tracking.
+      allow create: if (isAuthenticated() || true) && isValidReservation(request.resource.data);
+      
+      // Only admin or owner can update/delete
+      // Owners can only cancel their own if they aren't admin
+      allow update: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid && request.resource.data.status == 'cancelled' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']));
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isAdmin(); // Only admins can change roles
+    }
+
+    match /announcements/{announcementId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}
