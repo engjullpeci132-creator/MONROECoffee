@@ -315,7 +315,12 @@ export default function AdminDashboard() {
             {menuItems.map(item => (
               <div key={item.id} className="bg-background p-8 group">
                 <div className="aspect-square mb-4 overflow-hidden border border-outline-variant/30">
-                   <img src={item.image} alt={item.title} className="w-full h-full object-cover grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700" />
+                   <img 
+                    src={item.image} 
+                    alt={item.title} 
+                    className="w-full h-full object-cover grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700" 
+                    referrerPolicy="no-referrer"
+                  />
                 </div>
                 <div className="flex justify-between items-baseline mb-2">
                   <h3 className="font-headline text-xl italic">{item.title}</h3>
