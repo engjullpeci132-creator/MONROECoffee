@@ -12,6 +12,7 @@ import CTA from "./components/CTA";
 import Footer from "./components/Footer";
 import AdminDashboard from "./components/AdminDashboard";
 import UserProfile from "./components/UserProfile";
+import SystemNotice from "./components/SystemNotice";
 import { AuthProvider } from "./context/AuthContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -45,6 +46,7 @@ export default function App() {
               <Route path="/profile" element={<UserProfile />} />
             </Routes>
             <Footer />
+            <SystemNotice />
           </div>
         </Router>
       </AuthProvider>
